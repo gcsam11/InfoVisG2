@@ -1,0 +1,85 @@
+body {
+  font-family: 'Arial', sans-serif; 
+}
+
+h1 {
+  text-align: center;
+}
+
+.responsive-svg-container {
+  margin-right: auto;
+  margin-left: auto;
+  width: 100%;
+  max-width: 1200px;
+  /*display: flex;*/
+  flex-wrap: wrap;
+}
+
+#provider-filter{
+  position:absolute; 
+  margin-bottom: 10px;
+  background:white; 
+  padding:10px; 
+  border-radius:8px;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+  text-align: center;
+}
+
+#world_map {
+  display: block;
+  margin: 0 auto;
+}
+
+#world_map path {
+  vector-effect: non-scaling-stroke;
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  padding: 6px 8px;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 12px;
+  font-family: sans-serif;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.swatches-item {
+  float: left;
+  width: 16%;
+  break-inside: avoid;
+  display: flex;
+  align-items: center;
+  padding-bottom: 1px;
+  position: relative;
+}
+
+.swatches-swatch {
+  width: 15px;
+  height: 15px;
+  margin: 0 0.5em 0 0;
+}
+
+#back-to-map {
+  margin: 10px; 
+  padding: 8px 12px; 
+  font-size: 14px;
+}
+
+#sankey-container{
+  width: 100%; 
+  height: 700px;
+}
+
+/*.swatche-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: calc(100% - 15px - 0.5em);
+}*/

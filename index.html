@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Products Sold By Country | Group Assignment 2</title>
+	<link rel="stylesheet" type="text/css" href="./style.css">
+</head>
+
+<body>
+	<h1 class="responsive-svg-container">Products Sold By Country</h1>
+
+	<label for="provider-filter">Shipment Provider:</label>
+	<select id="provider-filter">
+	</select>
+
+	<div id="map" class="responsive-svg-container">
+		<svg id="world_map"></svg>
+	</div>
+
+	<!-- Load your scripts here -->
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="https://d3js.org/d3-collection.v1.min.js"></script>
+
+	<script type="module" src="./js/main.js"></script>
+</body>
+
+</html>
