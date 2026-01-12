@@ -16,8 +16,6 @@ h1 {
 }
 
 #provider-filter{
-  position:absolute; 
-  margin-bottom: 10px;
   background:white; 
   padding:10px; 
   border-radius:8px;

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Shipping Flow | Group Assignment 2</title>
+	<link rel="stylesheet" type="text/css" href="../style.css">
+	<style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;    /* center container */
+            padding: 20px;
+        }
+
+        /* element where the viz lives */
+        .viz-section {
+            margin-bottom: 50px; /* add space between visualizations */
+            padding-bottom: 20px;
+        }
+
+        /* last viz doesn't need margin at the bottom */
+        .chart-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        /* make SVG responsive */
+        .responsive-svg-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body>
+	<div class="dashboard-container">
+        <button id="back-to-map" style="margin-bottom: 20px;">
+            ← Back to Map
+        </button>
+
+        <div class="chart-section">
+            <h2>Sales Calendar</h2>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 8px;">
+                <button id="btn-prev">←</button>
+                <span id="year-display">...</span>
+                <button id="btn-next">→</button>
+            </div>
+            <div id="calendar" class="responsive-svg-container"></div>
+        </div>
+
+        <div class="chart-section">
+            <h2>Shipping Flow</h2>
+            <div id="legend" class="responsive-svg-container"></div>
+            <div id="sankey" class="responsive-svg-container"></div>
+        </div>
+    </div>
+
+	<!-- Load your scripts here -->
+	<script src="https://d3js.org/d3.v7.min.js"></script>
+	<script src="https://d3js.org/d3-collection.v1.min.js"></script>
+	<script src="https://unpkg.com/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+
+	<script type=module src="../js/calendar.js"></script>
+	<script type=module src="../js/sankey.js"></script>
+</body>
+
+</html>

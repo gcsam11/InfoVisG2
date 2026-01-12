@@ -90,7 +90,7 @@ export function drawChoropleth(rows, world) {
         .on("click", function (event, d) {
             const countryName = d.properties.name;
             const provider = d3.select("#provider-filter").property("value");
-            window.location.href = `html/sankey.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}`;
+            window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}`;
         });
 
     function updateMap(providerFilter = "All") {
