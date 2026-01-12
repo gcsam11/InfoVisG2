@@ -201,8 +201,14 @@ const createHeatMap = (data, colors) => {
       .attr("fill", d => colors(d.total))
       .attr("stroke", "#ccc")
       .attr("stroke-width", 0) // Hidden stroke unless hovered
+
+      // Invisible at the start of animation
+      .attr("opacity", 0)
       
       .on("mouseover", function(event, d) {
+          // Interrupt all animations (and force alpha=1) if user hovers over a block before ready
+          d3.select(this).interrupt();
+          d3.select(this).attr("opacity", 1);
           // Highlight cell
           d3.select(this)
             .attr("stroke", "black")
@@ -250,7 +256,12 @@ const createHeatMap = (data, colors) => {
           d3.select(this).attr("stroke-width", 0);
           // Hide tooltip
           tooltip.style("opacity", 0);
-      });
+      })
+
+      .transition()
+      .duration(500) // fade-in takes 500 ms
+      .delay(() => Math.random() * 1800 + 200) // randomly delay 200-2000 ms
+      .attr("opacity", 1);;
 
   // Weekday labels
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
