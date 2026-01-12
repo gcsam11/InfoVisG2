@@ -9,10 +9,15 @@
   Ref: https://github.com/d3/d3-time-format */
 const parseTime = d3.timeParse("%Y-%m-%d %H:%M");
 
-let fullDataset = [];
-let currentYear = 2022; // Default start year
-let availableYears = [2020, 2021, 2022, 2023, 2024, 2025]; 
 let colors;
+
+const params = new URLSearchParams(window.location.search);
+const selectedCountry = params.get("country");
+const selectedProvider = params.get("provider") || "All";
+const selectedYear = parseInt(params.get("year")) || 2022;
+
+// Update year display
+d3.select("#year-display").text(selectedYear);
 
 /* Load the dataset and formatting variables
   Ref: https://www.d3indepth.com/requests/ */
@@ -20,22 +25,40 @@ d3.csv("../data/online_sales_dataset.csv", row => {
   const quantity = +row.Quantity;
   const unitPrice = +row.UnitPrice;
   const discount = +row.Discount;
+  const dateObj = parseTime(row.InvoiceDate);
   return {
-    fullDate: parseTime(row.InvoiceDate),
+    fullDate: dateObj,
     // Single invoice revenue
     invoiceRevenue: quantity * unitPrice * (1 - discount),
     // for hoverbox/tooltip
     quantity: quantity,
     unitPrice: unitPrice,
+    // filters
+    country: row.Country,
+    provider: row.ShipmentProvider,
+    year: dateObj.getFullYear()
   }
 }).then(data => {
-  // Print out the data on the console
-  console.log(data);
+
+  // Filter the data first.
+  const filteredData = data.filter( d => {
+    const c = (d.country === selectedCountry)
+    const y = (d.year === selectedYear)
+    // always True if provider was not selected
+    const p = (selectedProvider === "All" || d.provider === selectedProvider)
+
+    return c && y && p;
+  });
+
+  if (filteredData.length === 0) {
+        d3.select("#calendar").html("<h1>No data for selected filters.</h1>");
+        return; 
+    }
 
   // We need to group by date to get revenue of the day
   // We use the Map data structure for this
   const formatDay = d3.timeFormat("%d.%m.%Y");
-  const dailyData = d3.rollup(data, 
+  const dailyData = d3.rollup(filteredData, 
     v => {
       return { 
         // Sum of all invoices for calendar view
@@ -46,8 +69,6 @@ d3.csv("../data/online_sales_dataset.csv", row => {
     },
     d => formatDay(d.fullDate)
   );
-  // Check everything works as expected
-  console.log(dailyData);
 
   // Create Array for the data
   const parseDay = d3.timeParse("%d.%m.%Y");
@@ -60,53 +81,19 @@ d3.csv("../data/online_sales_dataset.csv", row => {
       };
   });
 
-  fullDataset = heatmapData
-
   // Color scale
   // We need the max. daily revenue acquired
   // Note that we don't compute it again for each year that's rendered as
   // we want to be able to compare revenues between years
-  const globalMax = d3.max(fullDataset, d => d.total);
+  const globalMax = d3.max(heatmapData, d => d.total);
 
   colors = d3.scaleLinear()
   .range(["#1c1c1c", "#2fff00"])
   .domain([0, globalMax])
 
   // render (for the 1st time)
-  updateView();
-    
-  // event listeners
-  setupButtons();
+  createHeatMap(heatmapData, colors);
 })
-
-function updateView() {
-    // only use data from 'currentYear'
-    const yearData = fullDataset.filter(d => d.year === currentYear);
-
-    // update year text
-    d3.select("#year-display").text(currentYear);
-
-    // (re-)render
-    createHeatMap(yearData, colors);
-}
-
-function setupButtons() {
-    // previous year
-    d3.select("#btn-prev").on("click", () => {
-        if (currentYear > 2020) {
-            currentYear--;
-            updateView();
-        }
-    });
-
-    // next year
-    d3.select("#btn-next").on("click", () => {
-        if (currentYear < 2025) {
-            currentYear++;
-            updateView();
-        }
-    });
-}
 
 // Creates hourly bins
 function getHourlyRevenue(details) {
