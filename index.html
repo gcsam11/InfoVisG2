@@ -19,11 +19,27 @@
 		<svg id="world_map"></svg>
 	</div>
 
+	<div class="responsive-svg-container" id="form"></div>
+		<label for="yearSlider">Year</label>
+		<input id="yearSlider" type="range" value="2025" min="2020" max="2025" oninput="yearText.value=yearSlider.value" />
+		<input id="yearText" type="number" value="2025" min="2020" max="2025" oninput="yearSlider.value=yearText.value" />
+		
+		<label for="sort" style="margin-left:30px">Sort by</label>
+		<select name="sort" id="sort">
+			<option value="alphabet">Alphabetical</option>
+			<option value="pctAsce">Revenue, ascending</option>
+			<option value="pctDesc">Revenue, descending</option>
+		</select>
+	</div>
+	<div id="bar" class="responsive-svg-container"></div>
+
 	<!-- Load your scripts here -->
 	<script src="https://d3js.org/d3.v7.min.js"></script>
 	<script src="https://d3js.org/d3-collection.v1.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
 
 	<script type="module" src="./js/main.js"></script>
+	<script type="module" src="./js/bar.js"></script>
 </body>
 
 </html>
