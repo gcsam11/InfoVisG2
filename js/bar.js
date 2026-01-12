@@ -36,7 +36,7 @@ d3.csv("../data/online_sales_dataset.csv", d => {
   const countries = Array.from(new Set(data.map(d => d.country))).sort();
   const colors = d3.scaleOrdinal()
     .domain(countries)
-    .range(d3.quantize(d3.interpolateRainbow, countries.length));
+    .range(d3.quantize(d3.interpolateTurbo, countries.length));
 
   createBarChart(data, colors);
   createLineChart(data, colors);
