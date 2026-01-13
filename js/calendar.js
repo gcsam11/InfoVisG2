@@ -14,7 +14,7 @@ let colors;
 const params = new URLSearchParams(window.location.search);
 const selectedCountry = params.get("country");
 const selectedProvider = params.get("provider") || "All";
-const selectedYear = parseInt(params.get("year")) || 2022;
+const selectedYear = parseInt(params.get("year")) || 2025;
 
 // Update year display
 d3.select("#year-display").text(selectedYear);
