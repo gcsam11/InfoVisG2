@@ -1,7 +1,8 @@
 export function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
     return {
-        provider: params.get("provider") || "All"
+        provider: params.get("provider") || "All",
+        year: parseInt(params.get("year")) || 2025
     };
 }
 
@@ -60,6 +61,7 @@ export function drawChoropleth(rows, world) {
     const filters = getQueryParams();
     const initialProvider = filters.provider || "All";
     selectProvider.property("value", initialProvider);
+    let currentYear = filters.year;
 
     const countries = g.selectAll("path")
         .data(world.features)
@@ -89,15 +91,23 @@ export function drawChoropleth(rows, world) {
         })
         .on("click", function (event, d) {
             const countryName = d.properties.name;
-            const provider = d3.select("#provider-filter").property("value");
-            window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}`;
+            const provider = selectProvider.property("value");
+            window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}&year=${currentYear}`;
         });
 
-    function updateMap(providerFilter = "All") {
-        // Filter rows
-        const filteredRows = providerFilter === "All"
-            ? rows
-            : rows.filter(d => d.ShipmentProvider === providerFilter);
+    function updateMap(providerFilter = "All", yearFilter = currentYear) {
+        // Filter rows by both provider AND year
+        let filteredRows = rows;
+        
+        if (providerFilter !== "All") {
+            filteredRows = filteredRows.filter(d => d.ShipmentProvider === providerFilter);
+        }
+        
+        if (yearFilter) {
+            filteredRows = filteredRows.filter(d => 
+                d.InvoiceDate && d.InvoiceDate.getFullYear() === yearFilter
+            );
+        }
 
         // Aggregate sales by country
         const salesByCountry = d3.rollup(
@@ -112,7 +122,7 @@ export function drawChoropleth(rows, world) {
         });
 
         // Recompute color scale
-        const values = world.features.map(f => f.properties.filteredSales).filter(v => v > 0);;
+        const values = world.features.map(f => f.properties.filteredSales).filter(v => v > 0);
         const min = d3.min(values) || 0;
         const max = d3.max(values) || 1;
 
@@ -165,11 +175,18 @@ export function drawChoropleth(rows, world) {
             .text(d => d);
     }
 
-    // initial Map Update
-    updateMap(initialProvider);
+    // Initial Map Update
+    updateMap(initialProvider, currentYear);
 
+    // Listen for year changes from bar chart
+    window.addEventListener('yearChanged', (e) => {
+        currentYear = e.detail.year;
+        updateMap(selectProvider.property("value"), currentYear);
+    });
+
+    // Update provider dropdown listener
     selectProvider.on("change", function () {
         const selected = this.value;
-        updateMap(selected);
+        updateMap(selected, currentYear);
     });
 }
