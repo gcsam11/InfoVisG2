@@ -6,24 +6,65 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Products Sold By Country | Group Assignment 2</title>
 	<link rel="stylesheet" type="text/css" href="./style.css">
+	<style>
+		body, html {
+			margin: 0;
+			padding: 0;
+			overflow: hidden;
+			font-family: Arial, sans-serif;
+		}
+
+		.page-grid {
+			display: grid;
+			grid-template-columns: 1fr 4fr 1fr;
+			gap: 16px;
+			align-items: start;
+			padding: 8px 12px;
+		}
+		.left-col { display: flex; flex-direction: column; gap: 8px; }
+		.center-col { display: flex; flex-direction: column; gap: 12px; }
+
+		.filters label { margin: 0; white-space: nowrap; }
+		.filters select { width: auto; }
+
+		.center-col #map,
+		.center-col #bar,
+		.center-col #form {
+			width: 90%;
+			max-width: 900px;
+			align-self: center;
+		}
+
+		.center-col #map { height: auto; }
+
+		.center-col #map svg,
+		.center-col #bar svg { width: 100%; height: auto; }
+	</style>
 </head>
 
 <body>
 	<h1 class="responsive-svg-container">Products Sold By Country</h1>
 
-	<label for="provider-filter" style="margin: 0; white-space: nowrap;">Shipment Provider:</label>
-	<select id="provider-filter" style="width: auto; margin: 0;">
-	</select>
+	<div class="page-grid">
+		<div class="left-col">
+			<div class="filters">
+				<label for="provider-filter">Shipment Provider:</label>
+				<select id="provider-filter"></select>
+			</div>
+		</div>
 
-	<div id="map" class="responsive-svg-container">
-		<svg id="world_map"></svg>
-	</div>
+		<div class="center-col">
+			<div id="map" class="responsive-svg-container">
+				<svg id="world_map"></svg>
+			</div>
 
-	<div class="responsive-svg-container" id="form">
-		<h2>Annual Revenue Trend</h2>
-		<p style="text-align: center; color: #666; font-size: 14px;">Click on a year to filter the map above</p>
+			<div class="responsive-svg-container" id="form">
+				<h2>Annual Revenue Trend</h2>
+				<p style="text-align: center; color: #666; font-size: 14px;">Click on a year to filter the map above</p>
+			</div>
+			<div id="bar" class="responsive-svg-container"></div>
+		</div>
 	</div>
-	<div id="bar" class="responsive-svg-container"></div>
 
 	<!-- Load your scripts here -->
 	<script src="https://d3js.org/d3.v7.min.js"></script>
