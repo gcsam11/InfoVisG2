@@ -5,7 +5,8 @@ function getQueryParams() {
   const params = new URLSearchParams(window.location.search);
   return {
     country: params.get("country"),
-    provider: params.get("provider") || "All"
+    provider: params.get("provider") || "All",
+    year: parseInt(params.get("year")) || 2025
   };
 }
 
@@ -14,9 +15,16 @@ async function init() {
     const filters = getQueryParams();
 
     d3.select("#back-to-map").on("click", () => {
-      // Keep the provider filter when going back
-      const providerParam = filters.provider ? `?provider=${encodeURIComponent(filters.provider)}` : "";
-      window.location.href = `../index.html${providerParam}`;
+      // Keep both the provider filter and year when going back
+      const params = new URLSearchParams();
+      if (filters.provider && filters.provider !== "All") {
+        params.set("provider", filters.provider);
+      }
+      if (filters.year) {
+        params.set("year", filters.year);
+      }
+      const queryString = params.toString();
+      window.location.href = `../index.html${queryString ? '?' + queryString : ''}`;
     });
 
     const { rows } = await loadAllData();
@@ -34,6 +42,13 @@ async function init() {
       sankeyData = sankeyData.filter(d => d.ShipmentProvider === filters.provider);
     }
 
+    // Filter by year
+    if (filters.year) {
+      sankeyData = sankeyData.filter(d => 
+        d.InvoiceDate && d.InvoiceDate.getFullYear() === filters.year
+      );
+    }
+
     const container = d3.select("#sankey");
     container.selectAll("*").remove(); // clear previous content
 
@@ -44,7 +59,7 @@ async function init() {
         .style("font-size", "16px")
         .style("color", "#555")
         .style("text-align", "center")
-        .text(`No shipments for ${filters.country || "selected country"}${filters.provider ? ` via ${filters.provider}` : ""}.`);
+        .text(`No shipments for ${filters.country || "selected country"}${filters.provider && filters.provider !== "All" ? ` via ${filters.provider}` : ""}${filters.year ? ` in ${filters.year}` : ""}.`);
     } else {
       plotSankey(sankeyData);
     }
