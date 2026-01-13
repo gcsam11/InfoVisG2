@@ -19,18 +19,9 @@
 		<svg id="world_map"></svg>
 	</div>
 
-	<div class="responsive-svg-container" id="form"></div>
-		<h2>Revenue By Country</h2>
-		<label for="yearSlider" style="margin-left:170px">Year</label>
-		<input id="yearSlider" type="range" value="2025" min="2020" max="2025" oninput="yearText.value=yearSlider.value" />
-		<input id="yearText" type="number" value="2025" min="2020" max="2025" oninput="yearSlider.value=yearText.value" />
-		
-		<label for="sort" style="margin-left:30px">Sort by</label>
-		<select name="sort" id="sort">
-			<option value="alphabet">Alphabetical</option>
-			<option value="revenueAsc">Revenue, ascending</option>
-			<option value="revenueDesc">Revenue, descending</option>
-		</select>
+	<div class="responsive-svg-container" id="form">
+		<h2>Annual Revenue Trend</h2>
+		<p style="text-align: center; color: #666; font-size: 14px;">Click on a year to filter the map above</p>
 	</div>
 	<div id="bar" class="responsive-svg-container"></div>
 
