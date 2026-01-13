@@ -6,64 +6,13 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Shipping Flow | Group Assignment 2</title>
 	<link rel="stylesheet" type="text/css" href="../style.css">
-	<style>
-        body, html {
-            overflow: hidden;
-        }
-        .page-grid {
-            display: grid;
-            grid-template-columns: 1fr 5fr 1fr;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .left-col {
-            display: flex;
-            align-items: start;
-            justify-content: center;
-        }
-        .center-cell {
-            overflow: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .dashboard-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        /* element where the viz lives */
-        .viz-section {
-            margin-bottom: 50px; /* add space between visualizations */
-            padding-bottom: 20px;
-        }
-
-        /* last viz doesn't need margin at the bottom */
-        .chart-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: #333;
-        }
-
-        /* make SVG responsive */
-        .responsive-svg-container {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-        }
-    </style>
 </head>
 
-<body>
+
+<body class="details-page">
 	<div class="page-grid">
         <div class="left-col">
-            <button id="back-to-map" style="border-radius: 32px; margin-top: 15%; font-size: large;">
+            <button id="back-to-map">
                 ← Back
             </button>
         </div>
