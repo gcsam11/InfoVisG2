@@ -1,8 +1,9 @@
 export function getQueryParams() {
     const params = new URLSearchParams(window.location.search);
+    const yearParam = params.get("year");
     return {
         provider: params.get("provider") || "All",
-        year: parseInt(params.get("year")) || 2025
+        year: yearParam === "all" ? "all" : (parseInt(yearParam) || 2025)
     };
 }
 
@@ -60,8 +61,10 @@ export function drawChoropleth(rows, world) {
     // Set initial filter from URL
     const filters = getQueryParams();
     const initialProvider = filters.provider || "All";
+    let currentYear = filters.year; // Can be a number or "all"
+    let currentProvider = initialProvider;
+    
     selectProvider.property("value", initialProvider);
-    let currentYear = filters.year;
 
     const countries = g.selectAll("path")
         .data(world.features)
@@ -73,10 +76,11 @@ export function drawChoropleth(rows, world) {
         .style("cursor", "pointer")
         .on("mouseover", function (event, d) {
             d3.select(this).attr("stroke", "black").attr("stroke-width", 1.5);
+            const yearText = currentYear === "all" ? "all years" : currentYear;
             tooltip
                 .style("opacity", 1)
                 .html(`<strong>${d.properties.name}</strong><br>
-                       Nº of Products Sold: ${d.properties.filteredSales || 0}<br>
+                       Nº of Products Sold (${yearText}): ${d.properties.filteredSales || 0}<br>
                        <em>Click to view logistics flow</em>`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
@@ -92,18 +96,25 @@ export function drawChoropleth(rows, world) {
         .on("click", function (event, d) {
             const countryName = d.properties.name;
             const provider = selectProvider.property("value");
-            window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}&year=${currentYear}`;
+            
+            // FIXED: Pass the actual current year state, including "all"
+            const yearForDetails = currentYear;
+            
+            window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}&year=${yearForDetails}`;
         });
 
-    function updateMap(providerFilter = "All", yearFilter = currentYear) {
-        // Filter rows by both provider AND year
+    function updateMap(providerFilter, yearFilter) {
+        console.log("Updating map with provider:", providerFilter, "year:", yearFilter);
+        
+        // Filter rows by provider
         let filteredRows = rows;
         
         if (providerFilter !== "All") {
             filteredRows = filteredRows.filter(d => d.ShipmentProvider === providerFilter);
         }
         
-        if (yearFilter) {
+        // Filter by year (if not "all")
+        if (yearFilter !== "all") {
             filteredRows = filteredRows.filter(d => 
                 d.InvoiceDate && d.InvoiceDate.getFullYear() === yearFilter
             );
@@ -164,8 +175,9 @@ export function drawChoropleth(rows, world) {
             .attr("font-size", 10)
             .text(d => d.toLocaleString());
 
-        // Legend title (once)
-        const title = legend.selectAll(".legend-title").data(["Products sold"]);
+        // Legend title - update to show year mode
+        const yearText = yearFilter === "all" ? " (All Years)" : ` (${yearFilter})`;
+        const title = legend.selectAll(".legend-title").data([`Products sold${yearText}`]);
         title.join("text")
             .attr("class", "legend-title")
             .attr("x", 0)
@@ -176,17 +188,27 @@ export function drawChoropleth(rows, world) {
     }
 
     // Initial Map Update
-    updateMap(initialProvider, currentYear);
+    updateMap(currentProvider, currentYear);
 
     // Listen for year changes from bar chart
     window.addEventListener('yearChanged', (e) => {
         currentYear = e.detail.year;
-        updateMap(selectProvider.property("value"), currentYear);
+        console.log("Year changed event received:", currentYear);
+        updateMap(currentProvider, currentYear);
     });
 
     // Update provider dropdown listener
     selectProvider.on("change", function () {
         const selected = this.value;
-        updateMap(selected, currentYear);
+        currentProvider = selected;
+        console.log("Provider dropdown changed to:", selected);
+        
+        // Update the map immediately with the new provider
+        updateMap(currentProvider, currentYear);
+        
+        // Also notify bar chart that provider changed
+        window.dispatchEvent(new CustomEvent('providerChanged', { 
+            detail: { provider: selected }
+        }));
     });
 }
