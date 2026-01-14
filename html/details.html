@@ -6,35 +6,105 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Shipping Flow | Group Assignment 2</title>
 	<link rel="stylesheet" type="text/css" href="../style.css">
+	<style>
+        .dashboard-container {
+            max-width: 1000px;
+            margin: 0 auto;    /* center container */
+            padding: 20px;
+        }
+
+        /* element where the viz lives */
+        .viz-section {
+            margin-bottom: 50px; /* add space between visualizations */
+            padding-bottom: 20px;
+        }
+
+        /* last viz doesn't need margin at the bottom */
+        .chart-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        /* make SVG responsive */
+        .responsive-svg-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Year selector controls */
+        .year-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        .year-controls label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .year-controls select {
+            padding: 5px 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .all-years-notice {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            font-style: italic;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 
+<body>
+	<div class="dashboard-container">
+        <button id="back-to-map" style="margin-bottom: 20px;">
+            ← Back to Map
+        </button>
 
-<body class="details-page">
-	<div class="page-grid">
-        <div class="left-col">
-            <button id="back-to-map">
-                ← Back
-            </button>
-        </div>
-
-        <div class="center-cell">
-            <div class="dashboard-container">
-                <div class="chart-section">
-                    <h2>Sales Calendar</h2>
-                    <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 8px;">
-                        <span id="year-display">...</span>
-                    </div>
-                    <div id="calendar" class="responsive-svg-container"></div>
-                </div>
-
-                <div id="tooltip" class="tooltip"></div>
-
-                <div class="chart-section" style="margin-top: 5%;">
-                    <h2>Shipping Flow</h2>
-                    <div id="legend" class="responsive-svg-container"></div>
-                    <div id="sankey" class="responsive-svg-container"></div>
-                </div>
+        <div class="chart-section">
+            <h2>Sales Calendar</h2>
+            <div class="year-controls">
+                <label for="year-selector">Select Year:</label>
+                <select id="year-selector">
+                    <option value="2020">2020</option>
+                    <option value="2021">2021</option>
+                    <option value="2022">2022</option>
+                    <option value="2023">2023</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="all">All Years (Aggregate View)</option>
+                </select>
             </div>
+            <div style="display: flex; justify-content: center; gap: 10px; margin-bottom: 8px;">
+                <span id="year-display">...</span>
+            </div>
+            <div id="calendar" class="responsive-svg-container"></div>
+        </div>
+        <!-- Tooltip -->
+	    <div id="tooltip" class="tooltip"></div>
+
+        <div class="chart-section">
+            <h2>Shipping Flow</h2>
+            <div id="sankey-year-notice" class="all-years-notice"></div>
+            <div id="legend" class="responsive-svg-container"></div>
+            <div id="sankey" class="responsive-svg-container"></div>
         </div>
     </div>
 
