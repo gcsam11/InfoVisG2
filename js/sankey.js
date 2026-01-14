@@ -6,7 +6,7 @@ function getQueryParams() {
   return {
     country: params.get("country"),
     provider: params.get("provider") || "All",
-    year: parseInt(params.get("year")) || 2025
+    year: params.get("year") === "all" ? "all" : (parseInt(params.get("year")) || 2025)
   };
 }
 
@@ -42,8 +42,8 @@ async function init() {
       sankeyData = sankeyData.filter(d => d.ShipmentProvider === filters.provider);
     }
 
-    // Filter by year
-    if (filters.year) {
+    // Filter by year - only if not "all"
+    if (filters.year && filters.year !== "all") {
       sankeyData = sankeyData.filter(d => 
         d.InvoiceDate && d.InvoiceDate.getFullYear() === filters.year
       );
@@ -53,22 +53,23 @@ async function init() {
     container.selectAll("*").remove(); // clear previous content
 
     if (sankeyData.length === 0) {
+      const yearText = filters.year === "all" ? "across all years" : `in ${filters.year}`;
       container.append("div")
         .attr("class", "no-data-message")
         .style("padding", "20px")
         .style("font-size", "16px")
         .style("color", "#555")
         .style("text-align", "center")
-        .text(`No shipments for ${filters.country || "selected country"}${filters.provider && filters.provider !== "All" ? ` via ${filters.provider}` : ""}${filters.year ? ` in ${filters.year}` : ""}.`);
+        .text(`No shipments for ${filters.country || "selected country"}${filters.provider && filters.provider !== "All" ? ` via ${filters.provider}` : ""} ${yearText}.`);
     } else {
-      plotSankey(sankeyData);
+      plotSankey(sankeyData, filters.year);
     }
   } catch (err) {
     console.error("Error loading or filtering data for Sankey:", err);
   }
 }
 
-const plotSankey = function (data) {
+const plotSankey = function (data, selectedYear) {
   // Set 21-color scheme https://www.r-bloggers.com/2013/02/the-paul-tol-21-color-salute/
   const color = d3.scaleOrdinal([
     "#771155", "#AA4488", "#CC99BB", "#114477", "#4477AA", "#77AADD",
