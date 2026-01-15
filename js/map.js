@@ -8,8 +8,10 @@ export function getQueryParams() {
 }
 
 export function drawChoropleth(rows, world) {
-    const width = 1300;
-    const height = 700;
+    const width = 1200;
+    const height = 500;
+
+    let selectedCountry = "All";  // default: no country filter
 
     const svg = d3.select("#world_map")
         .attr("viewBox", `0 0 ${width} ${height}`)
@@ -63,7 +65,7 @@ export function drawChoropleth(rows, world) {
     const initialProvider = filters.provider || "All";
     let currentYear = filters.year; // Can be a number or "all"
     let currentProvider = initialProvider;
-    
+
     selectProvider.property("value", initialProvider);
 
     const countries = g.selectAll("path")
@@ -75,13 +77,18 @@ export function drawChoropleth(rows, world) {
         .attr("stroke-width", 0.5)
         .style("cursor", "pointer")
         .on("mouseover", function (event, d) {
-            d3.select(this).attr("stroke", "black").attr("stroke-width", 1.5);
+            if (d.properties.name === selectedCountry) {
+                d3.select(this).attr("stroke-width", 3); // thicker for selected + hover
+            } else {
+                d3.select(this).attr("stroke", "black").attr("stroke-width", 2);
+            }
+
             const yearText = currentYear === "all" ? "all years" : currentYear;
             tooltip
                 .style("opacity", 1)
                 .html(`<strong>${d.properties.name}</strong><br>
                        Nº of Products Sold (${yearText}): ${d.properties.filteredSales || 0}<br>
-                       <em>Click to view logistics flow</em>`)
+                       <em>Double Click to view logistics flow</em>`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
         })
@@ -89,33 +96,55 @@ export function drawChoropleth(rows, world) {
             tooltip.style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
         })
-        .on("mouseleave", function () {
-            d3.select(this).attr("stroke", "#fff").attr("stroke-width", 0.5);
+        .on("mouseout", function (event, d) {
+            if (d.properties.name === selectedCountry) {
+                // Selected country → normal red border
+                d3.select(this)
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 2);
+            } else {
+                // Non-selected → normal white border
+                d3.select(this)
+                    .attr("stroke", "#fff")
+                    .attr("stroke-width", 0.5);
+            }
             tooltip.style("opacity", 0);
         })
         .on("click", function (event, d) {
             const countryName = d.properties.name;
+
+            // Toggle logic: deselect if same country clicked
+            if (selectedCountry === countryName) {
+                selectedCountry = "All";  // remove filter
+            } else {
+                selectedCountry = countryName;  // select new country
+            }
+            updateCountrySelection(); // redraw borders
+            window.dispatchEvent(new CustomEvent('countrySelected', { detail: { country: selectedCountry } }));
+        })
+        .on("dblclick", function (event, d) {
+            const countryName = d.properties.name;
             const provider = selectProvider.property("value");
-            
-            // FIXED: Pass the actual current year state, including "all"
+
+            // Pass the actual current year state, including "all"
             const yearForDetails = currentYear;
-            
+
             window.location.href = `html/details.html?country=${encodeURIComponent(countryName)}&provider=${encodeURIComponent(provider)}&year=${yearForDetails}`;
         });
 
     function updateMap(providerFilter, yearFilter) {
-        console.log("Updating map with provider:", providerFilter, "year:", yearFilter);
-        
+        //console.log("Updating map with provider:", providerFilter, "year:", yearFilter);
+
         // Filter rows by provider
         let filteredRows = rows;
-        
+
         if (providerFilter !== "All") {
             filteredRows = filteredRows.filter(d => d.ShipmentProvider === providerFilter);
         }
-        
+
         // Filter by year (if not "all")
         if (yearFilter !== "all") {
-            filteredRows = filteredRows.filter(d => 
+            filteredRows = filteredRows.filter(d =>
                 d.InvoiceDate && d.InvoiceDate.getFullYear() === yearFilter
             );
         }
@@ -193,7 +222,6 @@ export function drawChoropleth(rows, world) {
     // Listen for year changes from bar chart
     window.addEventListener('yearChanged', (e) => {
         currentYear = e.detail.year;
-        console.log("Year changed event received:", currentYear);
         updateMap(currentProvider, currentYear);
     });
 
@@ -201,14 +229,20 @@ export function drawChoropleth(rows, world) {
     selectProvider.on("change", function () {
         const selected = this.value;
         currentProvider = selected;
-        console.log("Provider dropdown changed to:", selected);
-        
+
         // Update the map immediately with the new provider
         updateMap(currentProvider, currentYear);
-        
+
         // Also notify bar chart that provider changed
-        window.dispatchEvent(new CustomEvent('providerChanged', { 
+        window.dispatchEvent(new CustomEvent('providerChanged', {
             detail: { provider: selected }
         }));
     });
+
+    function updateCountrySelection() {
+        countries
+            .attr("stroke", d => d.properties.name === selectedCountry ? "#ff6b6b" : "#fff")
+            .attr("stroke-width", d => d.properties.name === selectedCountry ? 2 : 0.5);
+    }
+
 }

@@ -86,7 +86,6 @@ h1 {
 html, body {
   margin: 0;
   padding: 0;
-  overflow: hidden;
 }
 
 .page-grid {
@@ -141,7 +140,6 @@ html, body {
 .details-page .page-grid {
   grid-template-columns: 1fr 5fr 1fr;
   height: 100vh;
-  overflow: hidden;
 }
 
 .details-page .left-col {

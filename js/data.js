@@ -12,6 +12,7 @@ export async function loadAllData() {
             d.ShippingCost = +d.ShippingCost;
             d.InvoiceDate = d3.timeParse("%Y-%m-%d %H:%M")(d.InvoiceDate);
             d.CustomerID = +d.CustomerID;
+            d.revenue = d.Quantity * d.UnitPrice;
         });
 
         // Fix GeoJSON country names so they match the CSV
@@ -25,7 +26,6 @@ export async function loadAllData() {
                 f.properties.name = geoFix[f.properties.name];
             }
         });
-
 
         return { rows, world };
     });

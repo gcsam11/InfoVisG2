@@ -1,81 +1,92 @@
-const parseTime = d3.timeParse("%Y-%m-%d %H:%M");
-
 // Get initial year from URL or default to 2025
 function getQueryParams() {
   const params = new URLSearchParams(window.location.search);
   const yearParam = params.get("year");
   return {
     provider: params.get("provider") || "All",
+    country: params.get("country") || "All",
     year: yearParam === "all" ? "all" : (parseInt(yearParam) || 2025)
   };
 }
 
-d3.csv("../data/online_sales_dataset.csv", d => {
-  return {
-    invoiceDate: parseTime(d.InvoiceDate),
-    country: d.Country,
-    provider: d.ShipmentProvider,
-    quantity: +d.Quantity,
-    unitPrice: +d.UnitPrice,
-    revenue: +d.Quantity * +d.UnitPrice
-  }
-}).then(rawData => {
-  const validData = rawData.filter(d => d.invoiceDate && !isNaN(d.revenue));
-  
-  createYearlyTrendChart(validData);
-});
+export function drawBarChart(data) {
 
-function createYearlyTrendChart(data) {
+  // ---------- CONFIG ----------
   const width = 900, height = 250;
-  const margins = {top: 20, right: 30, bottom: 50, left: 80};
-  
-  const filters = getQueryParams();
-  let selectedYear = filters.year; // Can be a number or "all"
-  let selectedProvider = filters.provider;
+  const margins = { top: 60, right: 30, bottom: 40, left: 80 };
 
+  const filters = getQueryParams();
+  let selectedYear = filters.year;      // number or "all"
+  let selectedProvider = filters.provider;
+  let selectedCountry = filters.country;
+
+  window.addEventListener("countrySelected", onCountrySelected);
+  window.addEventListener("providerChanged", onProviderChange);
+
+  // ---------- SVG ----------
   const svg = d3.select("#bar")
     .append("svg")
     .attr("viewBox", [0, 0, width, height]);
 
-  // Tooltip
+  const chartTitle = svg.append("text")
+    .attr("x", width / 2)        // centered horizontally
+    .attr("y", 20)               // 20px from top of SVG
+    .attr("text-anchor", "middle")
+    .style("font-size", "26px")
+    .style("font-weight", "bold")
+    .text("Annual Revenue Trend");
+
+
+  const p = svg.append("p")
+    .style("font-size", "12px")
+    .text("Click on a year to filter the map above");
+
+
+  // ---------- TOOLTIP ----------
   const tooltip = d3.select("body")
     .append("div")
     .attr("class", "tooltip")
     .style("opacity", 0);
 
-  // Aggregate by year (and optionally filter by provider)
-  function aggregateData(providerFilter) {
+  // ---------- DATA AGGREGATION ----------
+  function aggregateData(providerFilter, countryFilter = "All") {
     let filtered = data;
+
     if (providerFilter !== "All") {
-      filtered = data.filter(d => d.provider === providerFilter);
+      filtered = data.filter(d => d.ShipmentProvider === providerFilter);
     }
-    
+
+    if (countryFilter !== "All") {
+      filtered = filtered.filter(d => d.Country === countryFilter);
+    }
+
     const yearlyData = d3.rollup(
       filtered,
       v => d3.sum(v, d => d.revenue),
-      d => d.invoiceDate.getFullYear()
+      d => d.InvoiceDate.getFullYear()
     );
-    
-    return Array.from(yearlyData, ([year, revenue]) => ({
-      year,
-      revenue
-    })).sort((a, b) => a.year - b.year);
+
+    console.log("Aggregated data for provider:", providerFilter, "country:", countryFilter, yearlyData);
+
+    const result = Array.from(yearlyData, ([year, revenue]) => ({ year, revenue }))
+      .sort((a, b) => a.year - b.year);
+    return result;
   }
 
-  let chartData = aggregateData(selectedProvider);
+  let chartData = aggregateData(selectedProvider, selectedCountry);
 
-  // Scales
+  // ---------- SCALES ----------
   const xScale = d3.scaleBand()
     .domain(chartData.map(d => d.year))
     .range([margins.left, width - margins.right])
     .padding(0.3);
-  
+
   const yScale = d3.scaleLinear()
     .domain([0, d3.max(chartData, d => d.revenue)])
     .nice()
     .range([height - margins.bottom, margins.top]);
 
-  // Axes
+  // ---------- AXES ----------
   const xAxis = d3.axisBottom(xScale);
   const yAxis = d3.axisLeft(yScale)
     .tickFormat(d => `$${d3.format(".2s")(d)}`);
@@ -84,15 +95,12 @@ function createYearlyTrendChart(data) {
     .attr("transform", `translate(0,${height - margins.bottom})`)
     .call(xAxis);
 
-  xGroup.selectAll("text")
-    .style("font-size", "12px");
-
   const yGroup = svg.append("g")
     .attr("transform", `translate(${margins.left},0)`)
     .call(yAxis)
     .call(g => g.select(".domain").remove());
 
-  // Y-axis label
+  // ---------- AXIS LABELS ----------
   svg.append("text")
     .attr("transform", "rotate(-90)")
     .attr("x", -(height / 2))
@@ -101,7 +109,6 @@ function createYearlyTrendChart(data) {
     .style("font-size", "12px")
     .text("Annual Revenue ($)");
 
-  // X-axis label
   svg.append("text")
     .attr("x", width / 2)
     .attr("y", height - 10)
@@ -109,7 +116,7 @@ function createYearlyTrendChart(data) {
     .style("font-size", "12px")
     .text("Year");
 
-  // Mode indicator text (shows "All Years" when in that mode)
+  // ---------- MODE TEXT ----------
   const modeText = svg.append("text")
     .attr("x", width - margins.right)
     .attr("y", margins.top)
@@ -120,7 +127,7 @@ function createYearlyTrendChart(data) {
     .style("opacity", selectedYear === "all" ? 1 : 0)
     .text("ALL YEARS MODE");
 
-  // Bars
+  // ---------- BARS ----------
   let bars = svg.append("g")
     .selectAll("rect")
     .data(chartData, d => d.year)
@@ -129,60 +136,29 @@ function createYearlyTrendChart(data) {
     .attr("y", d => yScale(d.revenue))
     .attr("height", d => yScale(0) - yScale(d.revenue))
     .attr("width", xScale.bandwidth())
-    .attr("fill", d => {
-      if (selectedYear === "all") return "#9e9e9e"; // Gray for all years mode
-      return d.year === selectedYear ? "#08306b" : "#6baed6";
-    })
-    .attr("stroke", d => (selectedYear !== "all" && d.year === selectedYear) ? "#000" : "none")
-    .attr("stroke-width", d => (selectedYear !== "all" && d.year === selectedYear) ? 2 : 0)
+    .attr("fill", d =>
+      selectedYear === "all"
+        ? "#9e9e9e"
+        : d.year === selectedYear
+          ? "#08306b"
+          : "#6baed6"
+    )
+    .attr("stroke", d =>
+      selectedYear !== "all" && d.year === selectedYear ? "#000" : "none"
+    )
+    .attr("stroke-width", d =>
+      selectedYear !== "all" && d.year === selectedYear ? 2 : 0
+    )
     .style("cursor", "pointer")
-    .on("click", function(event, d) {
-      // Toggle: if clicking the same year, switch to "all"
-      if (selectedYear === d.year) {
-        selectedYear = "all";
-      } else {
-        selectedYear = d.year;
-      }
-      updateYearSelection();
-      updateURL();
-      // Trigger map update via custom event
-      window.dispatchEvent(new CustomEvent('yearChanged', { 
-        detail: { year: selectedYear }
-      }));
-    })
-    .on("mouseover", function(event, d) {
-      if (selectedYear === "all" || d.year !== selectedYear) {
-        d3.select(this).attr("fill", "#4292c6");
-      }
-      const clickMsg = (selectedYear === d.year) 
-        ? "<em>Click to show all years</em>" 
-        : "<em>Click to filter to this year</em>";
-      tooltip
-        .style("opacity", 1)
-        .html(`<strong>${d.year}</strong><br>Revenue: $${d3.format(",.2f")(d.revenue)}<br>${clickMsg}`)
-        .style("left", (event.pageX + 10) + "px")
-        .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mousemove", function(event) {
-      tooltip
-        .style("left", (event.pageX + 10) + "px")
-        .style("top", (event.pageY - 28) + "px");
-    })
-    .on("mouseout", function(event, d) {
-      if (selectedYear === "all") {
-        d3.select(this).attr("fill", "#9e9e9e");
-      } else if (d.year !== selectedYear) {
-        d3.select(this).attr("fill", "#6baed6");
-      }
-      tooltip.style("opacity", 0);
-    });
+    .on("click", handleYearClick)
+    .on("mouseover", handleMouseOver)
+    .on("mousemove", handleMouseMove)
+    .on("mouseout", handleMouseOut);
 
-  // Selection indicator (sliding window visual) - only visible when a specific year is selected
+  // ---------- SELECTION INDICATOR ----------
   const selectionIndicator = svg.append("rect")
     .attr("class", "year-selector")
-    .attr("x", selectedYear !== "all" ? xScale(selectedYear) - 3 : 0)
     .attr("y", margins.top - 10)
-    .attr("width", selectedYear !== "all" ? xScale.bandwidth() + 6 : 0)
     .attr("height", height - margins.top - margins.bottom + 10)
     .attr("fill", "none")
     .attr("stroke", "#ff6b6b")
@@ -190,152 +166,182 @@ function createYearlyTrendChart(data) {
     .attr("stroke-dasharray", "5,5")
     .attr("rx", 4)
     .style("pointer-events", "none")
-    .style("opacity", selectedYear === "all" ? 0 : 1);
+    .style("opacity", selectedYear === "all" ? 0 : 1)
+    .attr("x", selectedYear !== "all" ? xScale(selectedYear) - 3 : 0)
+    .attr("width", selectedYear !== "all" ? xScale.bandwidth() + 6 : 0);
+
+  // ---------- FUNCTIONS ----------
+  function handleYearClick(event, d) {
+    selectedYear = (selectedYear === d.year) ? "all" : d.year;
+    updateYearSelection();
+    updateURL();
+
+    window.dispatchEvent(new CustomEvent("yearChanged", {
+      detail: { year: selectedYear }
+    }));
+  }
+
+  function handleMouseOver(event, d) {
+    if (selectedYear === "all" || d.year !== selectedYear) {
+      d3.select(this).attr("fill", "#4292c6");
+    }
+
+    tooltip
+      .style("opacity", 1)
+      .html(`
+        <strong>${d.year}</strong><br>
+        Revenue: $${d3.format(",.2f")(d.revenue)}<br>
+        <em>${selectedYear === d.year ? "Click to show all years" : "Click to filter to this year"}</em>
+      `)
+      .style("left", `${event.pageX + 10}px`)
+      .style("top", `${event.pageY - 28}px`);
+  }
+
+  function handleMouseMove(event) {
+    tooltip
+      .style("left", `${event.pageX + 10}px`)
+      .style("top", `${event.pageY - 28}px`);
+  }
+
+  function handleMouseOut(event, d) {
+    d3.select(this).attr("fill",
+      selectedYear === "all"
+        ? "#9e9e9e"
+        : d.year === selectedYear
+          ? "#08306b"
+          : "#6baed6"
+    );
+    tooltip.style("opacity", 0);
+  }
 
   function updateYearSelection() {
-    const isAllYears = selectedYear === "all";
-    
-    bars.transition()
-        .duration(300)
-        .attr("fill", d => {
-          if (isAllYears) return "#9e9e9e";
-          return d.year === selectedYear ? "#08306b" : "#6baed6";
-        })
-        .attr("stroke", d => (!isAllYears && d.year === selectedYear) ? "#000" : "none")
-        .attr("stroke-width", d => (!isAllYears && d.year === selectedYear) ? 2 : 0);
-    
-    if (isAllYears) {
-      selectionIndicator
-        .transition()
-        .duration(300)
-        .style("opacity", 0);
-      
-      modeText
-        .transition()
-        .duration(300)
-        .style("opacity", 1);
-    } else {
-      selectionIndicator
-        .transition()
-        .duration(300)
-        .attr("x", xScale(selectedYear) - 3)
-        .attr("width", xScale.bandwidth() + 6)
-        .style("opacity", 1);
-      
-      modeText
-        .transition()
-        .duration(300)
-        .style("opacity", 0);
+    const isAll = selectedYear === "all";
+
+    bars.transition().duration(300)
+      .attr("fill", d =>
+        isAll ? "#9e9e9e" : d.year === selectedYear ? "#08306b" : "#6baed6"
+      )
+      .attr("stroke", d =>
+        !isAll && d.year === selectedYear ? "#000" : "none"
+      )
+      .attr("stroke-width", d =>
+        !isAll && d.year === selectedYear ? 2 : 0
+      );
+
+    selectionIndicator.transition().duration(300)
+      .style("opacity", isAll ? 0 : 1)
+      .attr("x", !isAll ? xScale(selectedYear) - 3 : 0)
+      .attr("width", !isAll ? xScale.bandwidth() + 6 : 0);
+
+    modeText.transition().duration(300)
+      .style("opacity", isAll ? 1 : 0);
+  }
+
+  function onCountrySelected(event) {
+    selectedCountry = event.detail.country;
+    chartData = aggregateData(selectedProvider, selectedCountry);
+    redrawChart();
+    updateTitle();
+    updateURL();
+  }
+
+  function onProviderChange(event) {
+    selectedProvider = event.detail.provider;
+    chartData = aggregateData(selectedProvider, selectedCountry);
+    redrawChart();
+    updateTitle();
+    updateURL();
+  }
+
+  function updateTitle() {
+    let titleText = "Annual Revenue Trend";
+
+    // Add country only if filtered
+    if (selectedCountry !== "All") {
+      titleText += ` for ${selectedCountry}`;
     }
+
+    // Add provider only if filtered
+    if( selectedProvider !== "All") {
+      titleText += ` (${selectedProvider})`;
+    }
+
+    chartTitle.text(titleText);
   }
 
-  function updateURL() {
-    const params = new URLSearchParams(window.location.search);
-    params.set('year', selectedYear);
-    const newURL = `${window.location.pathname}?${params.toString()}`;
-    window.history.pushState({}, '', newURL);
-  }
-
-  // Listen for provider changes from dropdown
-  d3.select("#provider-filter").on("change", function() {
-    selectedProvider = this.value;
-    chartData = aggregateData(selectedProvider);
-    
+  function redrawChart() {
     // Update scales
     xScale.domain(chartData.map(d => d.year));
-    yScale.domain([0, d3.max(chartData, d => d.revenue)]).nice();
-    
-    // Update bars with transition
+    yScale.domain([0, d3.max(chartData, d => d.revenue) || 0]).nice();
+
     const t = d3.transition().duration(500);
     const isAllYears = selectedYear === "all";
-    
-    bars = bars.data(chartData, d => d.year)
+
+    // Rebind data
+    bars = bars
+      .data(chartData, d => d.year)
       .join(
         enter => enter.append("rect")
           .attr("x", d => xScale(d.year))
           .attr("y", yScale(0))
           .attr("height", 0)
           .attr("width", xScale.bandwidth())
-          .attr("fill", d => {
-            if (isAllYears) return "#9e9e9e";
-            return d.year === selectedYear ? "#08306b" : "#6baed6";
-          })
-          .attr("stroke", d => (!isAllYears && d.year === selectedYear) ? "#000" : "none")
-          .attr("stroke-width", d => (!isAllYears && d.year === selectedYear) ? 2 : 0)
+          .attr("fill", isAllYears ? "#9e9e9e" : "#6baed6")
           .style("cursor", "pointer")
+          .on("click", handleYearClick)
+          .on("mouseover", handleMouseOver)
+          .on("mousemove", handleMouseMove)
+          .on("mouseout", handleMouseOut)
           .call(enter => enter.transition(t)
             .attr("y", d => yScale(d.revenue))
-            .attr("height", d => yScale(0) - yScale(d.revenue))),
-        update => update
-          .call(update => update.transition(t)
-            .attr("x", d => xScale(d.year))
-            .attr("y", d => yScale(d.revenue))
             .attr("height", d => yScale(0) - yScale(d.revenue))
-            .attr("width", xScale.bandwidth())
-            .attr("fill", d => {
-              if (isAllYears) return "#9e9e9e";
-              return d.year === selectedYear ? "#08306b" : "#6baed6";
-            })
-            .attr("stroke", d => (!isAllYears && d.year === selectedYear) ? "#000" : "none")
-            .attr("stroke-width", d => (!isAllYears && d.year === selectedYear) ? 2 : 0)),
+          ),
+
+        update => update.call(update => update.transition(t)
+          .attr("x", d => xScale(d.year))
+          .attr("y", d => yScale(d.revenue))
+          .attr("height", d => yScale(0) - yScale(d.revenue))
+          .attr("width", xScale.bandwidth())
+          .attr("fill", d =>
+            isAllYears
+              ? "#9e9e9e"
+              : d.year === selectedYear
+                ? "#08306b"
+                : "#6baed6"
+          )
+        ),
+
         exit => exit.transition(t)
           .attr("y", yScale(0))
           .attr("height", 0)
           .remove()
-      )
-      .on("click", function(event, d) {
-        if (selectedYear === d.year) {
-          selectedYear = "all";
-        } else {
-          selectedYear = d.year;
-        }
-        updateYearSelection();
-        updateURL();
-        window.dispatchEvent(new CustomEvent('yearChanged', { 
-          detail: { year: selectedYear }
-        }));
-      })
-      .on("mouseover", function(event, d) {
-        if (selectedYear === "all" || d.year !== selectedYear) {
-          d3.select(this).attr("fill", "#4292c6");
-        }
-        const clickMsg = (selectedYear === d.year) 
-          ? "<em>Click to show all years</em>" 
-          : "<em>Click to filter to this year</em>";
-        tooltip
-          .style("opacity", 1)
-          .html(`<strong>${d.year}</strong><br>Revenue: $${d3.format(",.2f")(d.revenue)}<br>${clickMsg}`)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-      })
-      .on("mousemove", function(event) {
-        tooltip
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
-      })
-      .on("mouseout", function(event, d) {
-        if (selectedYear === "all") {
-          d3.select(this).attr("fill", "#9e9e9e");
-        } else if (d.year !== selectedYear) {
-          d3.select(this).attr("fill", "#6baed6");
-        }
-        tooltip.style("opacity", 0);
-      });
-    
+      );
+
     // Update axes
     xGroup.transition(t).call(xAxis);
-    xGroup.selectAll("text").style("font-size", "12px");
     yGroup.transition(t).call(yAxis);
-    
-    // Update selection indicator position
-    if (selectedYear !== "all") {
+
+    // Update selection indicator
+    if (selectedYear !== "all" && xScale(selectedYear)) {
       selectionIndicator
         .transition(t)
         .attr("x", xScale(selectedYear) - 3)
-        .attr("width", xScale.bandwidth() + 6);
+        .attr("width", xScale.bandwidth() + 6)
+        .style("opacity", 1);
+    } else {
+      selectionIndicator.transition(t).style("opacity", 0);
     }
-  });
+  }
 
-  // Export for external access
+
+  function updateURL() {
+    const params = new URLSearchParams(window.location.search);
+    params.set("year", selectedYear);
+    params.set("provider", selectedProvider);
+    params.set("country", selectedCountry);
+    window.history.pushState({}, "", `${window.location.pathname}?${params}`);
+  }
+
+  // ---------- EXPOSE ----------
   window.getSelectedYear = () => selectedYear;
 }
