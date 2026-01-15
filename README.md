@@ -14,7 +14,7 @@ As for interactions, the user can zoom in on the map using the wheel scroll, hov
 
 This project's source code is available [here](https://github.com/gcsam11/InfoVisG2).
 
-The live visualization can be seen [here](gcsam11.github.io).
+The live visualization can be seen [here](https://gcsam11.github.io).
 
 If the live visualization is not working, please open this folder in VSCode and run the [LiveServer](https://github.com/ritwickdey/vscode-live-server) plugin (be careful with https issues! use http if it does not work out of the box).
 
