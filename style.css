@@ -165,6 +165,10 @@ html, body {
   padding-bottom: 20px;
 }
 
+.details-page .chart-section {
+  margin-top: 3em;
+}
+
 .details-page .chart-section:last-child {
   border-bottom: none;
   margin-bottom: 0;
@@ -183,6 +187,42 @@ html, body {
 
 .details-page #back-to-map {
   border-radius: 32px;
-  margin-top: 15%;
   font-size: large;
+  position: fixed;
+  top: 1em;
+  left: 2em;
+  z-index: 1000;
+}
+
+/* Details page specific controls moved from details.html */
+.details-page .year-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.details-page .year-controls label {
+  font-weight: bold;
+  color: #333;
+}
+
+.details-page .year-controls select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.details-page .all-years-notice {
+  text-align: center;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+  margin-top: 10px;
 }
