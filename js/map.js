@@ -88,7 +88,7 @@ export function drawChoropleth(rows, world) {
                 .style("opacity", 1)
                 .html(`<strong>${d.properties.name}</strong><br>
                        Nº of Products Sold (${yearText}): ${d.properties.filteredSales || 0}<br>
-                       <em>Double Click to view logistics flow</em>`)
+                       <em>Double-click for details</em>`)
                 .style("left", (event.pageX + 10) + "px")
                 .style("top", (event.pageY - 28) + "px");
         })

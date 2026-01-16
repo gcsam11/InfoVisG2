@@ -117,6 +117,7 @@ export function drawBarChart(data) {
     .text("Year");
 
   // ---------- MODE TEXT ----------
+  /**
   const modeText = svg.append("text")
     .attr("x", width - margins.right)
     .attr("y", margins.top)
@@ -125,8 +126,8 @@ export function drawBarChart(data) {
     .style("font-weight", "bold")
     .style("fill", "#ff6b6b")
     .style("opacity", selectedYear === "all" ? 1 : 0)
-    .text("ALL YEARS MODE");
-
+    .text("");
+  */
   // ---------- BARS ----------
   let bars = svg.append("g")
     .selectAll("rect")
@@ -161,7 +162,7 @@ export function drawBarChart(data) {
     .attr("y", margins.top - 10)
     .attr("height", height - margins.top - margins.bottom + 10)
     .attr("fill", "none")
-    .attr("stroke", "#ff6b6b")
+    //.attr("stroke", "#ff6b6b")
     .attr("stroke-width", 3)
     .attr("stroke-dasharray", "5,5")
     .attr("rx", 4)
@@ -233,8 +234,8 @@ export function drawBarChart(data) {
       .attr("x", !isAll ? xScale(selectedYear) - 3 : 0)
       .attr("width", !isAll ? xScale.bandwidth() + 6 : 0);
 
-    modeText.transition().duration(300)
-      .style("opacity", isAll ? 1 : 0);
+    //modeText.transition().duration(300)
+    //  .style("opacity", isAll ? 1 : 0);
   }
 
   function onCountrySelected(event) {

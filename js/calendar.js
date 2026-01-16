@@ -16,9 +16,15 @@
   const selectedProvider = params.get("provider") || "All";
   const yearParam = params.get("year");
   let selectedYear = yearParam === "all" ? "all" : (parseInt(yearParam) || 2025);
+
+  const getTitle = (year, country, provider) => {
+    const yearText = year === "all" ? "All Years" : year;
+    const providerText = provider === "All" ? "All shipment providers" : provider;
+    return `${yearText} – ${country} – ${providerText}`;
+  };
   
   // Update year display
-  d3.select("#year-display").text(selectedYear === "all" ? "All Years (2020-2025)" : `Year: ${selectedYear}`);
+  d3.select("#year-display").text(getTitle(selectedYear, selectedCountry, selectedProvider));
   
   // Set the dropdown value
   d3.select("#year-selector").property("value", selectedYear);
@@ -35,7 +41,7 @@
     window.history.pushState({}, '', newURL);
     
     // Update display
-    d3.select("#year-display").text(selectedYear === "all" ? "All Years (2020-2025)" : `Year: ${selectedYear}`);
+    d3.select("#year-display").text(getTitle(selectedYear, selectedCountry, selectedProvider));
     
     // Reload the page to update both calendar and sankey
     window.location.reload();
@@ -68,8 +74,11 @@
       const y = (selectedYear === "all" || d.year === selectedYear)
       // always True if provider was not selected
       const p = (selectedProvider === "All" || d.provider === selectedProvider)
+
+      // data contains some negative prices, we discard those
+      const pos = (d.invoiceRevenue >= 0);
   
-      return c && y && p;
+      return c && y && p && pos;
     });
   
     if (filteredData.length === 0) {
@@ -270,6 +279,10 @@
           const aggregateNote = d.isAggregate 
             ? `<div style="color: #ff6b6b; font-weight: bold; margin-bottom: 5px;">Aggregated across ${d.count} orders from all years</div>` 
             : '';
+
+          const tooltipDate = d.isAggregate 
+            ?  d3.timeFormat("%-d.%-m.")(d.date)
+            : formatDate(d.date);
   
           tooltip
             .html(`
@@ -278,7 +291,7 @@
               </div>
   
               <div style="font-size: 12px; font-weight: bold; margin-bottom: 8px;">
-              ${formatDate(d.date)}
+              ${tooltipDate}
               </div>
   
               ${aggregateNote}
